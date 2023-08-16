@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const messageSchema = new Schema({
-    message: {
+const promptSchema = new Schema({
+    prompt: {
         type: String,
         required: true
     },
@@ -12,4 +12,4 @@ const messageSchema = new Schema({
     }
 });
 
-module.exports = mongoose.model('Message', messageSchema);
+module.exports = mongoose.model('Prompt', promptSchema);

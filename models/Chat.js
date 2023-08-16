@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const chatSchema = new Schema({
-    messages: [{
+    prompts: [{
         type: Schema.Types.ObjectId,
-        ref: 'Message'
+        ref: 'Prompt'
     }],
     recentImage: {
         type: String,

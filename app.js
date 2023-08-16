@@ -5,7 +5,11 @@ const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const cors = require("cors");
 
+const { getFileStream } = require("./util/s3");
+
 const authRoutes = require("./routes/auth");
+const modelRoutes = require("./routes/model");
+const dataRoutes = require("./routes/data");
 
 const app = express();
 
@@ -18,6 +22,14 @@ app.use(cors());
 // LOGGING
 app.use(morgan('dev'));
 
+// FOR DOWNLOADING THE IMAGE
+app.get('/image/:key', (req,res,next)=>{
+  const key=req.params.key;
+  const readStream = getFileStream(key);
+
+  readStream.pipe(res);
+});
+
 app.get("/", (req, res) => {
   return res.status(200).json({
     body: "Backend working",
@@ -26,6 +38,8 @@ app.get("/", (req, res) => {
 
 // ROUTES
 app.use("/auth", authRoutes);
+app.use("/model", modelRoutes);
+app.use("/data", dataRoutes);
 
 // ERROR HANDLING
 app.use((error, req, res, next) => {
@@ -47,7 +61,7 @@ mongoose
   .then(() => {
     console.log("Database connected");
     app.listen(process.env.PORT || 8080, () => {
-      console.log(process.env.PORT);
+      console.log("Exposed port:",process.env.PORT);
     });
   })
   .catch((err) => {

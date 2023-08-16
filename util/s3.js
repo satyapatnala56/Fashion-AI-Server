@@ -24,5 +24,7 @@ exports.getFileStream = (fileKey) => {
         Bucket: bucketName
     }
 
+    console.log(fileKey);
+
     return s3.getObject(downloadParams).createReadStream();
 }
