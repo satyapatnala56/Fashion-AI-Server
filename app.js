@@ -18,6 +18,14 @@ app.use(cors());
 // LOGGING
 app.use(morgan('dev'));
 
+// FOR DOWNLOADING THE IMAGE
+app.get('/image/:key', (req,res,next)=>{
+    const key=req.params.key;
+    const readStream = getFileStream(key);
+  
+    readStream.pipe(res);
+});  
+
 app.get('/', (req, res) => {
     return res.status(200).json({
         body: "Backend working"
