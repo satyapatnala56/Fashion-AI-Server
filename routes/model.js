@@ -6,6 +6,17 @@ const isAuth = require("../middleware/is-auth");
 
 const router = express.Router();
 
+// POST /model/prompt
+router.post(
+  "/prompt",
+  [
+    body("chatId").trim().not().isEmpty().withMessage("Please enter a chatId"),
+    body("prompt").trim().not().isEmpty().withMessage("Please enter a prompt"),
+  ],
+  isAuth,
+  modelController.prompt
+);
+
 // POST /model/promptWithImage
 router.post(
   "/promptWithImage",
@@ -21,7 +32,7 @@ router.post(
 router.post(
   "/promptWithMaskedImage",
   [
-    body("chatId").trim().not().isEmpty().withMessage("Please enter a prompt"),
+    body("chatId").trim().not().isEmpty().withMessage("Please enter a chatId"),
     body("prompt").trim().not().isEmpty().withMessage("Please enter a prompt"),
     body("image").trim().not().isEmpty().withMessage("Please upload an image"),
     body("maskedImage").trim().not().isEmpty().withMessage("Please upload a maskedImage"),
@@ -34,6 +45,7 @@ router.post(
 router.post(
   "/getSimilarProducts",
   [
+    body("chatId").trim().not().isEmpty().withMessage("Please enter a chatId"),
     body("image").trim().not().isEmpty().withMessage("Please upload an image"),
     body("prompt").trim().not().isEmpty().withMessage("Please enter a prompt"),
   ],

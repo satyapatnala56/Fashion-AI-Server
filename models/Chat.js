@@ -8,7 +8,6 @@ const chatSchema = new Schema({
     }],
     recentImage: {
         type: String,
-        required: true
     },
 });
 

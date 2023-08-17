@@ -5,6 +5,67 @@ const User = require("../models/User");
 const Chat = require("../models/Chat");
 const Prompt = require("../models/Prompt");
 
+exports.prompt = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error("Enter non-empty prompt");
+      error.statusCode = 403;
+      error.data = errors.array();
+      throw error;
+    }
+
+    const chatId = req.body.chatId;
+    const prompt = req.body.prompt;
+
+    const chats = await Chat.findById(chatId).populate("prompts");
+
+    let prompts = prompt + "\n";
+    for (let i = 0; i < chats.prompts.length; i++) {
+      prompts += chats.prompts[i].prompt + "\n";
+    }
+
+    const response = await axios.post(
+      process.env.MODEL_API_URL + "/text-to-image",
+      {
+        prompt: prompts,
+      }
+    );
+
+    const newPrompt = new Prompt({
+      prompt: prompt,
+      timestamp: Date.now(),
+      image: process.env.BACKEND_URL + "/image/" + response.data.filename,
+    });
+
+    await newPrompt.save();
+
+    await Chat.updateOne(
+      { _id: chatId },
+      { $push: { prompts: newPrompt._id } },
+      {
+        $set: {
+          recentImage:
+            process.env.BACKEND_URL + "/image/" + response.data.filename,
+        },
+      }
+    );
+
+    // Check if the user contains chat else add
+    await User.updateOne({ _id: req.userId }, { $addToSet: { chats: chatId } });
+
+    res.status(200).json({
+      message: "Image generated successfully",
+      image: process.env.BACKEND_URL + "/image/" + response.data.filename,
+    });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
 exports.promptWithImage = async (req, res, next) => {
   try {
     const errors = validationResult(req);
@@ -29,6 +90,7 @@ exports.promptWithImage = async (req, res, next) => {
     const newPrompt = new Prompt({
       prompt: prompt,
       timestamp: Date.now(),
+      image: process.env.BACKEND_URL + "/image/" + response.data.filename,
     });
 
     await newPrompt.save();
@@ -36,18 +98,20 @@ exports.promptWithImage = async (req, res, next) => {
     await Chat.updateOne(
       { _id: chatId },
       { $push: { prompts: newPrompt._id } },
-      { $set: { recentImage: image } }
+      {
+        $set: {
+          recentImage:
+            process.env.BACKEND_URL + "/image/" + response.data.filename,
+        },
+      }
     );
 
     // Check if the user contains chat else add
-    await User.updateOne(
-      { _id: req.userId },
-      { $addToSet: { chats: chatId } }
-    );
+    await User.updateOne({ _id: req.userId }, { $addToSet: { chats: chatId } });
 
     res.status(200).json({
       message: "Image generated successfully",
-      image: process.env.MODEL_API_URL+"/image/"+response.data.image,
+      image: process.env.BACKEND_URL + "/image/" + response.data.filename,
     });
   } catch (err) {
     if (!err.statusCode) {
@@ -58,7 +122,7 @@ exports.promptWithImage = async (req, res, next) => {
 };
 
 exports.promptWithMaskedImage = async (req, res, next) => {
-  try{
+  try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       const error = new Error("Enter non-empty prompt and image");
@@ -84,6 +148,7 @@ exports.promptWithMaskedImage = async (req, res, next) => {
     const newPrompt = new Prompt({
       prompt: prompt,
       timestamp: Date.now(),
+      image: process.env.BACKEND_URL + "/image/" + response.data.filename,
     });
 
     await newPrompt.save();
@@ -91,18 +156,20 @@ exports.promptWithMaskedImage = async (req, res, next) => {
     await Chat.updateOne(
       { _id: chatId },
       { $push: { messages: newPrompt._id } },
-      { $set: { recentImage: image } }
+      {
+        $set: {
+          recentImage:
+            process.env.BACKEND_URL + "/image/" + response.data.filename,
+        },
+      }
     );
 
     // Check if the user contains chat else add
-    await User.updateOne(
-      { _id: req.userId },
-      { $addToSet: { chats: chatId } }
-    );
+    await User.updateOne({ _id: req.userId }, { $addToSet: { chats: chatId } });
 
     res.status(200).json({
       message: "Image generated successfully",
-      image: process.env.MODEL_API_URL+"/image/"+response.data.image, 
+      image: process.env.BACKEND_URL + "/image/" + response.data.filename,
     });
   } catch (err) {
     if (!err.statusCode) {
@@ -143,4 +210,4 @@ exports.getSimilarProducts = async (req, res, next) => {
     }
     next(err);
   }
-}
+};

@@ -9,6 +9,9 @@ const promptSchema = new Schema({
     timestamp: {
         type: String,
         required: true
+    },
+    image: {
+        type: String,
     }
 });
 
